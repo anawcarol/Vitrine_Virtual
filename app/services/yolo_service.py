@@ -47,7 +47,7 @@ class YoloService:
         # Fallback para vídeo vazio
         if total_fluxo == 0:
              return {
-                "fluxo": 0, "permanencia": 0, "velocidade": 0, 
+                "fluxo": 0, "permanencia": 0, "velocidade": 0,"taxa_passagem": 0,
                 "ivu": 0, "janela": {"status": "Sem Dados", "horario": "--"}
             }
 
@@ -58,6 +58,25 @@ class YoloService:
         avg_speed_px = sum(self.speeds) / len(self.speeds) if self.speeds else 0
         avg_speed_m_s = round(avg_speed_px * 0.05, 2) 
 
+        #métrica 4: Taxa de Passagem
+
+        # 1. Primeiro, descobrimos quanto tempo CADA pessoa única ficou na tela
+        tempos_por_pessoa = {}
+        for tracker_id, data in self.tracking_data.items():
+            # Calculamos o tempo total (frames que ela apareceu / FPS)
+            tempos_por_pessoa[tracker_id] = data['frames_present'] / adjusted_fps
+
+        # 2. Contamos quantas pessoas ficaram MAIS de 3 segundos (consideradas "paradas")
+        pessoas_que_pararam = sum(1 for tempo in tempos_por_pessoa.values() if tempo > 3.0)
+        
+        # 3. Calculamos a taxa de quem apenas PASSOU (não parou)
+        if total_fluxo > 0:
+            # Garante que o valor fique entre 0 e 100
+            taxa = ((total_fluxo - pessoas_que_pararam) / total_fluxo) * 100
+            taxa = max(0, min(100, taxa)) 
+        else:
+            taxa = 0
+
         # Cálculo do IVU e Janela com NOVOS LIMIARES
         ivu_score = self._calculate_ivu(total_fluxo, avg_dwell, avg_speed_m_s)
         opp_window = self._calculate_opportunity(total_fluxo, avg_dwell)
@@ -66,6 +85,7 @@ class YoloService:
             "fluxo": total_fluxo,
             "permanencia": round(avg_dwell, 1),
             "velocidade": avg_speed_m_s,
+            "taxa_passagem": round(taxa, 1),
             "ivu": ivu_score,
             "janela": opp_window
         }

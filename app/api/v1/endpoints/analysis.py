@@ -39,6 +39,13 @@ async def analyze_video(
                     "value": raw_data['fluxo'],
                     "unit": "pessoas"
                 },
+
+                "taxa_passagem": { 
+                    "label": "Taxa de Passagem",
+                    "value": raw_data['taxa_passagem'], # Esse nome tem que ser igual ao que o Service gerar
+                    "unit": "%"
+                },
+
                 "permanencia": {
                     "label": "Permanência Média",
                     "value": raw_data['permanencia'],
