@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+pydantic-settings
+python-dotenv
+ultralytics
+supervision
+opencv-python
+python-multipart
+psycopg2-binary
