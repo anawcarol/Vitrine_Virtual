@@ -6,3 +6,5 @@ venv/
 .idea/
 .vscode/
 runs/  # Pasta onde o YOLO salva logs automaticamente
+*.pt
+temp_uploads/

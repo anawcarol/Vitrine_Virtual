@@ -10,6 +10,10 @@ class AnalysisResponse(BaseModel):
     video_id: str
     status: str
     
+    # Temperatura e hora de início do vídeo
+    start_time: str  
+    temperature: float  
+    
     # Camada 1
     metrics_basic: Dict[str, MetricBase]
     

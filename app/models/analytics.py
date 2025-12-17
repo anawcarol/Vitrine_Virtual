@@ -21,3 +21,6 @@ class VideoAnalysis(Base):
     # Métricas Estratégicas (Camada 3)
     ivu_score = Column(Float) # Índice de Vitalidade Urbana (0-100)
     activation_potential = Column(String) # "Passagem", "Ativável", "Viva"
+
+    #txa de passagem
+    taxa_passagem = Column(Integer)
