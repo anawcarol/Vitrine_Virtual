@@ -1,11 +1,20 @@
-# main.py
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import analysis
 
-app = FastAPI(title="Vitrine Virtual API", version="1.0.0")
+app = FastAPI(title="Vitrine Virtual API")
 
-# Inclui as rotas
+# 1. Configura o CORS primeiro (Essencial para o Dashboard)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 2. Inclui a rota
 app.include_router(analysis.router, prefix="/api/v1", tags=["Analysis"])
 
 if __name__ == "__main__":
