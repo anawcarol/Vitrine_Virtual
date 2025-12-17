@@ -3,6 +3,7 @@ import numpy as np
 import supervision as sv
 from ultralytics import YOLO
 from typing import Dict, Any
+from datetime import time
 import math
 
 class YoloService:
@@ -16,7 +17,22 @@ class YoloService:
         self.speeds = []
         self.tracking_data = {}
 
-    async def process_video(self, video_path: str) -> Dict[str, Any]:
+    async def process_video(self, video_path: str, start_time: time = None, temperature: float = None) -> Dict[str, Any]:
+        """
+        Processa o vídeo com YOLO e retorna métricas.
+        
+        Args:
+            video_path: Caminho do vídeo
+            start_time: Hora de início do vídeo (opcional)
+            temperature: Temperatura em °C (opcional)
+        """
+        
+        # Log dos metadados recebidos
+        if start_time:
+            print(f"⏰ Vídeo iniciado às: {start_time.strftime('%H:%M:%S')}")
+        if temperature is not None:
+            print(f"🌡️ Temperatura registrada: {temperature}°C")
+        
         try:
             video_info = sv.VideoInfo.from_video_path(video_path)
             fps = video_info.fps if video_info.fps > 0 else 30
@@ -70,8 +86,9 @@ class YoloService:
         # Métrica de Velocidade (Mantida como original)
         avg_speed_px = sum(self.speeds) / len(self.speeds) if self.speeds else 0
         avg_speed_m_s = round(avg_speed_px * 0.05, 2) 
-
-        #métrica 4: Taxa de Passagem
+        
+          # Métrica 4: Taxa de Passagem
+        adjusted_fps = fps / stride  # FPS ajustado pelo stride
 
         # 1. Primeiro, descobrimos quanto tempo CADA pessoa única ficou na tela
         tempos_por_pessoa = {}
@@ -117,12 +134,14 @@ class YoloService:
                 self.tracking_data[tracker_id] = {
                     'first_seen': current_time,
                     'last_seen': current_time,
-                    'last_pos': current_pos
+                    'last_pos': current_pos,
+                    'frames_present': 1  # ADICIONADO: contador de frames
                 }
             else:
                 # --- ALTERADO: Atualiza apenas o tempo de SAÍDA (última vista) ---
                 data_track = self.tracking_data[tracker_id]
                 data_track['last_seen'] = current_time
+                data_track['frames_present'] = data_track.get('frames_present', 0) + 1  # Incrementa contador
                 
                 # Cálculo de Velocidade (Mantendo sua lógica de distância)
                 last_x, last_y = data_track['last_pos']

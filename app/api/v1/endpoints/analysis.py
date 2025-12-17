@@ -1,6 +1,8 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Form
 from app.schemas.video import AnalysisResponse
 from app.services.yolo_service import YoloService
+from datetime import datetime, time
+from typing import Optional
 import shutil
 import os
 
@@ -42,6 +44,8 @@ class VideoValidator:
         ],
     }
 
+    
+
     @staticmethod
     async def validate_video_upload(file: UploadFile) -> tuple[bool, str | None]:
         """
@@ -80,10 +84,34 @@ class VideoValidator:
 
 router = APIRouter()
 
+def validate_time_format(time_str: str) -> time:
+    """
+    Valida e converte string de tempo para objeto time.
+    Aceita formatos: "14:30", "14:30:00", "2:30 PM"
+    """
+    try:
+        # Tenta formato 24h com segundos
+        return datetime.strptime(time_str, "%H:%M:%S").time()
+    except ValueError:
+        try:
+            # Tenta formato 24h sem segundos
+            return datetime.strptime(time_str, "%H:%M").time()
+        except ValueError:
+            try:
+                # Tenta formato 12h (AM/PM)
+                return datetime.strptime(time_str, "%I:%M %p").time()
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Formato de hora inválido. Use HH:MM (ex: 14:30) ou HH:MM:SS (ex: 14:30:00)"
+                )
+
 @router.post("/analyze", response_model=AnalysisResponse)
        
 async def analyze_video(
     file: UploadFile = File(...),
+    start_time: str = Form(..., description="Hora de início do vídeo (formato: HH:MM ou HH:MM:SS)"),
+    temperature: float = Form(..., description="Temperatura em graus Celsius"),
     service: YoloService = Depends(YoloService)
     ):
 
@@ -93,7 +121,23 @@ async def analyze_video(
         #raise HTTPException(status_code=400, detail="Apenas arquivos de vídeo são permitidos.")
             # Metodo para validar o arquivo de vídeo
 
-    #1. Validação de conteúdo (bytes do header) - NÃO APENAS EXTENSÃO
+    # 1. Validação de tempo
+    try:
+        validated_time = validate_time_format(start_time)
+        print(f"⏰ Hora de início validada: {validated_time.strftime('%H:%M:%S')}")
+    except HTTPException as e:
+        raise e
+    
+    # 2. Validação de temperatura
+    if not -50 <= temperature <= 60:  # Range razoável para temperaturas urbanas
+        raise HTTPException(
+            status_code=400,
+            detail="Temperatura deve estar entre -50°C e 60°C"
+        )
+    
+    print(f"🌡️ Temperatura registrada: {temperature}°C")
+
+    # 3. Validação de conteúdo (bytes do header) - NÃO APENAS EXTENSÃO
     is_valid, detected_format = await VideoValidator.validate_video_upload(file)
     
     if not is_valid:
@@ -105,7 +149,7 @@ async def analyze_video(
     print(f"✅ Vídeo válido detectado: {detected_format.upper()}")
 
 
-    # 2. Salvar arquivo temporário (O YOLO precisa ler do disco)
+    # 4. Salvar arquivo temporário (O YOLO precisa ler do disco)
     temp_dir = "temp_uploads"
     os.makedirs(temp_dir, exist_ok=True)
     temp_path = f"{temp_dir}/{file.filename}"
@@ -114,15 +158,23 @@ async def analyze_video(
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        # 3. Chamar o Service (IA REAL RODANDO AGORA)
+        # 5. Chamar o Service (IA REAL RODANDO AGORA)
         print(f"🔄 Iniciando processamento do vídeo: {file.filename}")
-        raw_data = await service.process_video(temp_path)
-        print("✅ Processamento concluído!")
+        # Passar tempo e temperatura para o service
+        raw_data = await service.process_video(
+            temp_path, 
+            start_time=validated_time,
+            temperature=temperature
+        )
 
-        # 4. Montar a Resposta (Mapper)
+        print("✅ Processamento concluído!")
+        
+        # 6. Montar a Resposta (Mapper)
         return {
             "video_id": file.filename,
             "status": "success",
+            "start_time": validated_time.strftime("%H:%M:%S"), 
+            "temperature": temperature,  
             "metrics_basic": {
                 "fluxo": {
                     "label": "Fluxo Total",
