@@ -1,111 +1,30 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Form
 from app.schemas.video import AnalysisResponse
 from app.services.yolo_service import YoloService
+from app.core.validators import VideoValidator, validate_time_format
 import shutil
 import os
-
-class VideoValidator:
-    # Headers de formatos de vídeo comuns
-    VIDEO_SIGNATURES = {
-        'mp4': [
-            b'\x00\x00\x00\x18ftypmp4',  # MP4
-            b'\x00\x00\x00\x1cftypisom', # MP4 ISO
-            b'\x00\x00\x00\x20ftypmp42', # MP4 v2
-            b'\x00\x00\x00\x1cftypM4V',  # M4V
-        ],
-        'mov': [
-            b'\x00\x00\x00\x14ftypqt',   # QuickTime
-            b'moov',                      # MOV (alternative)
-        ],
-        'avi': [
-            b'RIFF',                      # AVI (followed by file size and 'AVI ')
-        ],
-        'wmv': [
-            b'\x30\x26\xB2\x75\x8E\x66\xCF\x11\xA6\xD9\x00\xAA\x00\x62\xCE\x6C',  # WMV/ASF
-        ],
-        'flv': [
-            b'FLV\x01',                   # Flash Video
-        ],
-        'mkv': [
-            b'\x1A\x45\xDF\xA3',          # Matroska/MKV
-        ],
-        'webm': [
-            b'\x1A\x45\xDF\xA3',          # WebM (uses Matroska container)
-        ],
-        'mpeg': [
-            b'\x00\x00\x01\xBA',          # MPEG-PS
-            b'\x00\x00\x01\xB3',          # MPEG video stream
-        ],
-        '3gp': [
-            b'\x00\x00\x00\x14ftyp3gp',  # 3GP
-            b'\x00\x00\x00\x203gp',       # 3GP alternative
-        ],
-    }
-
-    @staticmethod
-    async def validate_video_upload(file: UploadFile) -> tuple[bool, str | None]:
-        """
-        Valida se o arquivo enviado é realmente um vídeo checando os bytes inciais do header.
-        
-        Args:
-            file: Arquivo de upload do FastAPI
-            
-        Returns:
-            tuple: (is_valid, detected_format)
-        """
-        try:
-            # Lê os primeiros 32 bytes
-            header = await file.read(32)
-            
-            # Volta o ponteiro para o início do arquivo
-            await file.seek(0)
-            
-            # Checa contra todas as assinaturas conhecidas
-            for format_name, signatures in VideoValidator.VIDEO_SIGNATURES.items():
-                for signature in signatures:
-                    if header.startswith(signature):
-                        return True, format_name
-                    
-                    # Caso especial para AVI - precisa checar 'AVI ' no offset 8
-                    if format_name == 'avi' and signature == b'RIFF':
-                        if header.startswith(b'RIFF') and header[8:12] == b'AVI ':
-                            return True, 'avi'
-            
-            return False, None
-            
-        except Exception as e:
-            print(f"Erro ao validar arquivo: {e}")
-            return False, None
-        
 
 router = APIRouter()
 
 @router.post("/analyze", response_model=AnalysisResponse)
-       
 async def analyze_video(
     file: UploadFile = File(...),
+    start_time: str = Form(..., description="Hora de início do vídeo (HH:MM:SS)"),
     service: YoloService = Depends(YoloService)
-    ):
-
-    # 1. Validação simples
-
-    #if not file.filename.endswith((".mp4", ".avi", ".mov")):
-        #raise HTTPException(status_code=400, detail="Apenas arquivos de vídeo são permitidos.")
-            # Metodo para validar o arquivo de vídeo
-
-    #1. Validação de conteúdo (bytes do header) - NÃO APENAS EXTENSÃO
-    is_valid, detected_format = await VideoValidator.validate_video_upload(file)
+):
+    """
+    Endpoint principal: Recebe vídeo, valida formato e hora, e processa métricas de fluxo/IVU.
+    """
     
-    if not is_valid:
-        raise HTTPException(
-            status_code=400, 
-            detail="Arquivo inválido. O conteúdo do arquivo não corresponde a nenhum formato de vídeo conhecido."
-        )
-    
-    print(f"✅ Vídeo válido detectado: {detected_format.upper()}")
+    # 1. Validações (via core/validators.py)
+    validated_time = validate_time_format(start_time)
+    print(f"⏰ Hora de início validada: {validated_time}")
 
+    detected_format = await VideoValidator.validate_file(file)
+    print(f"✅ Formato detectado: {detected_format.upper()}")
 
-    # 2. Salvar arquivo temporário (O YOLO precisa ler do disco)
+    # 2. Arquivo Temporário
     temp_dir = "temp_uploads"
     os.makedirs(temp_dir, exist_ok=True)
     temp_path = f"{temp_dir}/{file.filename}"
@@ -114,20 +33,32 @@ async def analyze_video(
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        # 3. Chamar o Service (IA REAL RODANDO AGORA)
-        print(f"🔄 Iniciando processamento do vídeo: {file.filename}")
-        raw_data = await service.process_video(temp_path)
-        print("✅ Processamento concluído!")
+        # 3. Processamento (Service)
+        print(f"🔄 Iniciando YOLOv8 no arquivo: {file.filename}")
+        
+        # Chamada limpa (sem temperatura)
+        raw_data = await service.process_video(
+            temp_path, 
+            start_time=validated_time
+        )
 
-        # 4. Montar a Resposta (Mapper)
+        print("✅ Análise concluída com sucesso!")
+        
+        # 4. Mapper de Resposta
         return {
             "video_id": file.filename,
             "status": "success",
+            "start_time": validated_time.strftime("%H:%M:%S"),
             "metrics_basic": {
                 "fluxo": {
                     "label": "Fluxo Total",
                     "value": raw_data['fluxo'],
                     "unit": "pessoas"
+                },
+                "taxa_passagem": { 
+                    "label": "Taxa de Passagem",
+                    "value": raw_data.get('taxa_passagem', 0),
+                    "unit": "%"
                 },
                 "permanencia": {
                     "label": "Permanência Média",
@@ -146,11 +77,12 @@ async def analyze_video(
             "opportunity_window": raw_data['janela']
         }
 
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        print(f"❌ Erro: {e}")
+        print(f"❌ Erro Crítico: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
     finally:
-        # Limpeza: Deleta o vídeo depois de processar para não lotar o HD
         if os.path.exists(temp_path):
             os.remove(temp_path)

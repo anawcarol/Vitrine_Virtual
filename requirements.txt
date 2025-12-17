@@ -9,3 +9,4 @@ supervision
 opencv-python
 python-multipart
 psycopg2-binary
+httpx

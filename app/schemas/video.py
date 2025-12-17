@@ -10,6 +10,9 @@ class AnalysisResponse(BaseModel):
     video_id: str
     status: str
     
+    # Apenas hora de início (temperatura foi removida daqui)
+    start_time: str  
+    
     # Camada 1
     metrics_basic: Dict[str, MetricBase]
     
@@ -18,7 +21,7 @@ class AnalysisResponse(BaseModel):
     
     # Camada 3 (O Ouro)
     urban_vitality_index: float
-    opportunity_window: Dict[str, str] # Ex: {"melhor_horario": "18h"}
+    opportunity_window: Dict[str, str]
     
     class Config:
         from_attributes = True
