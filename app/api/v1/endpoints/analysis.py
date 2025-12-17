@@ -4,16 +4,106 @@ from app.services.yolo_service import YoloService
 import shutil
 import os
 
+class VideoValidator:
+    # Headers de formatos de vídeo comuns
+    VIDEO_SIGNATURES = {
+        'mp4': [
+            b'\x00\x00\x00\x18ftypmp4',  # MP4
+            b'\x00\x00\x00\x1cftypisom', # MP4 ISO
+            b'\x00\x00\x00\x20ftypmp42', # MP4 v2
+            b'\x00\x00\x00\x1cftypM4V',  # M4V
+        ],
+        'mov': [
+            b'\x00\x00\x00\x14ftypqt',   # QuickTime
+            b'moov',                      # MOV (alternative)
+        ],
+        'avi': [
+            b'RIFF',                      # AVI (followed by file size and 'AVI ')
+        ],
+        'wmv': [
+            b'\x30\x26\xB2\x75\x8E\x66\xCF\x11\xA6\xD9\x00\xAA\x00\x62\xCE\x6C',  # WMV/ASF
+        ],
+        'flv': [
+            b'FLV\x01',                   # Flash Video
+        ],
+        'mkv': [
+            b'\x1A\x45\xDF\xA3',          # Matroska/MKV
+        ],
+        'webm': [
+            b'\x1A\x45\xDF\xA3',          # WebM (uses Matroska container)
+        ],
+        'mpeg': [
+            b'\x00\x00\x01\xBA',          # MPEG-PS
+            b'\x00\x00\x01\xB3',          # MPEG video stream
+        ],
+        '3gp': [
+            b'\x00\x00\x00\x14ftyp3gp',  # 3GP
+            b'\x00\x00\x00\x203gp',       # 3GP alternative
+        ],
+    }
+
+    @staticmethod
+    async def validate_video_upload(file: UploadFile) -> tuple[bool, str | None]:
+        """
+        Valida se o arquivo enviado é realmente um vídeo checando os bytes inciais do header.
+        
+        Args:
+            file: Arquivo de upload do FastAPI
+            
+        Returns:
+            tuple: (is_valid, detected_format)
+        """
+        try:
+            # Lê os primeiros 32 bytes
+            header = await file.read(32)
+            
+            # Volta o ponteiro para o início do arquivo
+            await file.seek(0)
+            
+            # Checa contra todas as assinaturas conhecidas
+            for format_name, signatures in VideoValidator.VIDEO_SIGNATURES.items():
+                for signature in signatures:
+                    if header.startswith(signature):
+                        return True, format_name
+                    
+                    # Caso especial para AVI - precisa checar 'AVI ' no offset 8
+                    if format_name == 'avi' and signature == b'RIFF':
+                        if header.startswith(b'RIFF') and header[8:12] == b'AVI ':
+                            return True, 'avi'
+            
+            return False, None
+            
+        except Exception as e:
+            print(f"Erro ao validar arquivo: {e}")
+            return False, None
+        
+
 router = APIRouter()
 
 @router.post("/analyze", response_model=AnalysisResponse)
+       
 async def analyze_video(
     file: UploadFile = File(...),
     service: YoloService = Depends(YoloService)
-):
+    ):
+
     # 1. Validação simples
-    if not file.filename.endswith((".mp4", ".avi", ".mov")):
-        raise HTTPException(status_code=400, detail="Apenas arquivos de vídeo são permitidos.")
+
+    #if not file.filename.endswith((".mp4", ".avi", ".mov")):
+        #raise HTTPException(status_code=400, detail="Apenas arquivos de vídeo são permitidos.")
+            # Metodo para validar o arquivo de vídeo
+
+    #1. Validação de conteúdo (bytes do header) - NÃO APENAS EXTENSÃO
+    is_valid, detected_format = await VideoValidator.validate_video_upload(file)
+    
+    if not is_valid:
+        raise HTTPException(
+            status_code=400, 
+            detail="Arquivo inválido. O conteúdo do arquivo não corresponde a nenhum formato de vídeo conhecido."
+        )
+    
+    print(f"✅ Vídeo válido detectado: {detected_format.upper()}")
+
 
     # 2. Salvar arquivo temporário (O YOLO precisa ler do disco)
     temp_dir = "temp_uploads"
