@@ -9,4 +9,4 @@ app = FastAPI(title="Vitrine Virtual API", version="1.0.0")
 app.include_router(analysis.router, prefix="/api/v1", tags=["Analysis"])
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
