@@ -1,15 +1,3 @@
-Aqui está o conteúdo perfeito para o seu `README.md`.
-
-Ele está dividido em duas partes estratégicas:
-
-1.  **Entendendo a Arquitetura (MCRS):** Explica a lógica das pastas para que ninguém coloque código no lugar errado.
-2.  **Guia de Instalação (Windows/Linux):** Passo a passo "à prova de falhas" para o resto da sua equipe rodar o projeto em 5 minutos.
-
-Copie e cole isso no seu arquivo `README.md`:
-
------
-
-````markdown
 # 🏙️ Vitrine Virtual API
 
 Backend inteligente para revitalização urbana do Setor Comercial Sul (SCS). Utiliza Visão Computacional (YOLOv8) para transformar vídeos de câmeras de segurança em métricas de negócio e vitalidade urbana.
@@ -104,7 +92,7 @@ python main.py
 Se tudo der certo, você verá uma mensagem como:
 `Uvicorn running on http://0.0.0.0:8000`
 
------
+
 
 ## 📚 Documentação Interativa (Swagger)
 
@@ -114,4 +102,3 @@ Com o servidor rodando, acesse no seu navegador:
 
 Lá você verá todos os endpoints disponíveis e poderá testar o envio de vídeos e recebimento de JSONs sem precisar criar um Frontend.
 
------
