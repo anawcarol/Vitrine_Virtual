@@ -92,19 +92,8 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4\. Configurar Variáveis de Ambiente (.env)
 
-O arquivo `.env` contém senhas e **NÃO** está no GitHub. Você precisa criar um arquivo chamado `.env` na raiz do projeto e colar o conteúdo abaixo (peça a URL do banco atualizada para o líder do projeto):
-
-```ini
-PROJECT_NAME="Vitrine Virtual API"
-API_V1_STR="/api/v1"
-SECRET_KEY="segredo_temporario_hackathon"
-# Substitua abaixo pela URL real do Supabase que enviei no grupo
-DATABASE_URL="postgresql://user:password@url_do_supabase:5432/postgres"
-```
-
-### 5\. Rodar o Servidor
+### 4\. Rodar o Servidor
 
 Agora é só rodar a API:
 
