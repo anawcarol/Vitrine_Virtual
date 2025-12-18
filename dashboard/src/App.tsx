@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Upload, CloudRain, Thermometer, Users, Clock, Zap, 
   MapPin, CheckCircle2, LayoutDashboard, Activity, Lightbulb, 
-  Hammer, TrendingUp, AlertCircle
+  Hammer, TrendingUp, AlertCircle, Calendar
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
@@ -10,10 +10,9 @@ import {
   RadarChart, PolarGrid, PolarRadiusAxis, Radar, Legend
 } from 'recharts';
 import { motion } from 'framer-motion';
-// 👇 AQUI ESTAVA O ERRO. ADICIONAMOS "type" NA IMPORTAÇÃO
 import type { ReportData } from './types';
 
-// 👇 ATUALIZE SEU LINK AQUI
+// 👇 MANTENHA O SEU LINK CORRETO DO NGROK AQUI
 const API_URL = "https://submeningeal-unexpansively-alberta.ngrok-free.dev/api/v1/complete-analysis"; 
 
 function App() {
@@ -21,6 +20,10 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Novos Estados para Inputs do Usuário
+  const [selectedMonth, setSelectedMonth] = useState("4"); // Default: Abril
+  const [selectedTime, setSelectedTime] = useState("12:00"); // Default: Meio-dia
 
   const handleAnalyze = async () => {
     if (!file) return;
@@ -29,8 +32,9 @@ function App() {
     
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("start_time", "12:00:00");
-    formData.append("month", "12");
+    // Adiciona os segundos (:00) para garantir formato HH:MM:SS
+    formData.append("start_time", `${selectedTime}:00`); 
+    formData.append("month", selectedMonth);
 
     try {
       const res = await fetch(API_URL, {
@@ -39,12 +43,15 @@ function App() {
         body: formData
       });
       
-      if (!res.ok) throw new Error("Falha na comunicação com a API");
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Erro API: ${res.status} - ${errText}`);
+      }
       
       const json = await res.json();
       setData(json);
     } catch (err) {
-      setError("Erro ao processar. Verifique se o Ngrok está rodando.");
+      setError("Erro ao processar. Verifique se o link do Ngrok no código está igual ao do terminal.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -55,34 +62,73 @@ function App() {
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
+        {/* Efeitos de Fundo */}
         <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-secondary/20 rounded-full blur-[120px] pointer-events-none" />
         
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-          className="bg-card/50 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-2xl max-w-lg w-full text-center z-10"
+          className="bg-card/50 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-3xl shadow-2xl max-w-lg w-full text-center z-10"
         >
-          <div className="mb-8 flex justify-center">
-            <div className="w-20 h-20 bg-gradient-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25">
-              <Activity size={40} className="text-white" />
+          <div className="mb-6 flex justify-center">
+            <div className="w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25">
+              <Activity size={32} className="text-white" />
             </div>
           </div>
           
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
             Vitrine Virtual
           </h1>
-          <p className="text-gray-400 mb-8 text-lg">Urban Analytics & Intelligence AI</p>
+          <p className="text-gray-400 mb-8">Configure os parâmetros da análise</p>
           
-          <div className="space-y-4">
-            <label className={`block w-full h-40 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-primary bg-primary/10' : 'border-gray-700 hover:border-gray-500 hover:bg-white/5'}`}>
-              <Upload className={`mb-3 ${file ? 'text-primary' : 'text-gray-500'}`} size={32} />
-              <span className="text-sm font-medium text-gray-300">
-                {file ? file.name : "Arraste ou clique para enviar vídeo"}
+          <div className="space-y-4 text-left">
+            
+            {/* Input de Arquivo */}
+            <label className={`block w-full h-32 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-primary bg-primary/10' : 'border-gray-700 hover:border-gray-500 hover:bg-white/5'}`}>
+              <Upload className={`mb-2 ${file ? 'text-primary' : 'text-gray-500'}`} size={24} />
+              <span className="text-sm font-medium text-gray-300 text-center px-4">
+                {file ? file.name : "Clique para selecionar o vídeo (MP4)"}
               </span>
               <input type="file" className="hidden" accept="video/*" onChange={e => setFile(e.target.files?.[0] || null)} />
             </label>
 
+            {/* Grid de Inputs (Mês e Hora) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs text-gray-400 ml-1 flex items-center gap-1"><Calendar size={12}/> Mês da Análise</label>
+                <select 
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-primary focus:bg-white/10 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="1" className="bg-card">Janeiro</option>
+                  <option value="2" className="bg-card">Fevereiro</option>
+                  <option value="3" className="bg-card">Março</option>
+                  <option value="4" className="bg-card">Abril</option>
+                  <option value="5" className="bg-card">Maio</option>
+                  <option value="6" className="bg-card">Junho</option>
+                  <option value="7" className="bg-card">Julho</option>
+                  <option value="8" className="bg-card">Agosto</option>
+                  <option value="9" className="bg-card">Setembro</option>
+                  <option value="10" className="bg-card">Outubro</option>
+                  <option value="11" className="bg-card">Novembro</option>
+                  <option value="12" className="bg-card">Dezembro</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-gray-400 ml-1 flex items-center gap-1"><Clock size={12}/> Horário</label>
+                <input 
+                  type="time" 
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-primary focus:bg-white/10 transition-all cursor-pointer"
+                />
+              </div>
+            </div>
+
             {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm flex items-center justify-center gap-2">
+              <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-xs flex items-center justify-center gap-2 text-center">
                 <AlertCircle size={16} /> {error}
               </div>
             )}
@@ -90,7 +136,7 @@ function App() {
             <button 
               onClick={handleAnalyze} 
               disabled={!file || loading}
-              className="w-full py-4 bg-gradient-to-r from-primary to-blue-600 hover:to-blue-500 rounded-xl font-bold text-white shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 bg-gradient-to-r from-primary to-blue-600 hover:to-blue-500 rounded-xl font-bold text-white shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
             >
               {loading ? (
                 <><span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span> Processando...</>
@@ -104,9 +150,8 @@ function App() {
     );
   }
 
-  // --- PREPARAÇÃO DOS DADOS ---
+  // --- DASHBOARD (View) ---
   
-  // 1. Radar Data (Normalizado)
   const radarData = [
     { subject: 'Fluxo', A: Math.min(data.metrics_basic.fluxo.value * 2, 100), fullMark: 100 },
     { subject: 'Perm.', A: Math.min(data.metrics_basic.permanencia.value * 10, 100), fullMark: 100 },
@@ -115,14 +160,12 @@ function App() {
     { subject: 'Conf.', A: data.climate.temperature_avg_c > 28 ? 40 : 90, fullMark: 100 },
   ];
 
-  // 2. Bar Chart Data (Comparativo)
   const barData = [
     { name: 'Fluxo', valor: data.metrics_basic.fluxo.value, fill: '#3b82f6' },
     { name: 'Perm.', valor: data.metrics_basic.permanencia.value, fill: '#8b5cf6' },
     { name: 'Veloc.', valor: data.metrics_behavioral.velocidade.value, fill: '#f59e0b' },
   ];
 
-  // 3. Pie Chart Data (Recomendações)
   const recTypes = data.analysis.recomendacoes.reduce((acc: any, curr) => {
     acc[curr.tipo] = (acc[curr.tipo] || 0) + 1;
     return acc;
@@ -133,7 +176,6 @@ function App() {
   }));
   const COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981'];
 
-  // 4. Vitality Gauge
   const vitalityData = [{ name: 'IVU', value: data.urban_vitality_index, fill: '#f59e0b' }];
 
   return (
@@ -180,7 +222,7 @@ function App() {
               </div>
               <h2 className="text-3xl font-bold">{data.context.local}</h2>
               <p className="text-gray-400 text-sm flex items-center gap-2 mt-1">
-                <Clock size={14} /> Ref: {data.climate.hour}h00 • {data.video_id}
+                <Clock size={14} /> Ref: {data.climate.hour}h00 • Mês {data.climate.month} • {data.video_id}
               </p>
             </div>
             
@@ -231,10 +273,8 @@ function App() {
             </motion.div>
           </div>
 
-          {/* CHARTS ROW 1: RADAR & GAUGE */}
+          {/* CHARTS ROW 1 */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* RADAR CHART */}
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.5 }}
               className="bg-card border border-white/5 p-6 rounded-2xl lg:col-span-1 flex flex-col items-center justify-center">
               <h3 className="text-lg font-bold mb-6 flex items-center gap-2 w-full"><Activity size={18} className="text-secondary" /> Perfil Urbano</h3>
@@ -251,7 +291,6 @@ function App() {
               </div>
             </motion.div>
 
-            {/* VITALITY GAUGE */}
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.6 }}
               className="bg-card border border-white/5 p-6 rounded-2xl lg:col-span-2 flex flex-col md:flex-row items-center gap-8">
                <div className="relative w-64 h-64 flex-shrink-0">
@@ -272,17 +311,15 @@ function App() {
                     <p className="text-gray-400 text-sm leading-relaxed">
                       O índice de <strong>{data.urban_vitality_index}</strong> indica um perfil 
                       <span className="text-accent"> {data.analysis.perfil.replace('_', ' ').toUpperCase()}</span>. 
-                      A área apresenta potencial de ativação imediato.
+                      Os dados foram calculados considerando as condições climáticas de {data.climate.month === 12 ? "Dezembro" : "Abril"}.
                     </p>
                   </div>
                </div>
             </motion.div>
           </div>
 
-          {/* CHARTS ROW 2: BAR & PIE */}
+          {/* CHARTS ROW 2 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            {/* BAR CHART: COMPARATIVO */}
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6 }}
               className="bg-card border border-white/5 p-6 rounded-2xl">
               <h3 className="text-lg font-bold mb-4">Métricas Comparativas</h3>
@@ -298,7 +335,6 @@ function App() {
               </div>
             </motion.div>
 
-            {/* PIE CHART: TIPOS DE RECOMENDAÇÃO */}
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.7 }}
               className="bg-card border border-white/5 p-6 rounded-2xl flex flex-col">
                <h3 className="text-lg font-bold mb-4">Distribuição de Recomendações</h3>
@@ -320,7 +356,7 @@ function App() {
             </motion.div>
           </div>
 
-          {/* LISTA DE RECOMENDAÇÕES */}
+          {/* RECOMENDAÇÕES */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }} className="space-y-4">
               <h3 className="text-xl font-bold flex items-center gap-2"><Hammer className="text-primary" /> Oportunidades Públicas</h3>
