@@ -1,62 +1,70 @@
-async function uploadVideo() {
-    console.log("Botão clicado, iniciando upload...");
-    const fileInput = document.getElementById('videoInput');
-    if (!fileInput.files[0]) {
-        alert("Selecione um vídeo!");
-        return;
+let uploadInProgress = false; // Flag para prevenir saída durante upload
+window.addEventListener('beforeunload', function (e) {
+    if (uploadInProgress) {
+        e.preventDefault();
+        e.returnValue = 'Upload em andamento. Deseja sair?';
+        return e.returnValue;
     }
-    console.log("Arquivo selecionado:", fileInput.files[0].name);
-
+});
+async function uploadVideo() {
+    const fileInput = document.getElementById('videoInput');
+    if (!fileInput.files[0]) return alert("Selecione um vídeo!");
+    uploadInProgress = true;
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
-
-    document.getElementById('ivu-value').innerText = "Processando...";
-
-    try {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/analyze', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || 'Erro na análise');
+    formData.append('start_time', '00:00:00');
+    document.getElementById('ivu-value').innerText = "Processando..."; // Feedback visual
+    const xhr = new XMLHttpRequest(); // Usa XMLHttpRequest ao invés de fetch para melhor controle de timeout
+    xhr.timeout = 1800000; // 30 minutos
+    xhr.open('POST', 'http://127.0.0.1:8000/api/v1/analyze', true);
+    xhr.onload = function() {
+        uploadInProgress = false;
+        if (xhr.status === 200) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                atualizarInterface(data);
+            } catch (error) {
+                alert("Erro ao processar resposta");
+                document.getElementById('ivu-value').innerText = "--";
+            }
+        } else {
+            alert("Erro no servidor");
+            document.getElementById('ivu-value').innerText = "--";
         }
-
-        const data = await response.json();
-        console.log("DADOS RECEBIDOS:", data); // Verifique no F12
-        
-        // MAPEAMENTO DOS CAMPOS REAIS DO SEU PYTHON
-        const ivu = data.urban_vitality_index;
-        const fluxo = data.metrics_basic.fluxo.value;
-        const perm = data.metrics_basic.permanencia.value;
-        const vel = data.metrics_behavioral.velocidade.value;
-
-        // Atualiza a tela
-        document.getElementById('ivu-value').innerText = ivu;
-        document.getElementById('flux-value').innerText = fluxo;
-        document.getElementById('perm-value').innerText = perm + "s";
-        document.getElementById('vel-value').innerText = vel + " m/s";
-
-        // Exibe o JSON completo
-        document.getElementById('json-output').innerText = JSON.stringify(data, null, 2);
-
-        renderChart(fluxo, perm, ivu, vel);
-
-    } catch (error) {
-        console.error("Erro no JS:", error);
-        alert("Erro: " + error.message);
-    }
+    };
+    xhr.onerror = () => {
+        uploadInProgress = false;
+        alert("Erro de conexão!");
+        document.getElementById('ivu-value').innerText = "--";
+    };
+    xhr.ontimeout = () => {
+        uploadInProgress = false;
+        alert("Timeout! Processamento demorou muito.");
+        document.getElementById('ivu-value').innerText = "--";
+    };
+    xhr.send(formData);
 }
-
-function renderChart(f, p, i, v) {
+function atualizarInterface(data) {
+    const ivu = data.urban_vitality_index;  // Extração dos dados
+    const fluxo = data.metrics_basic.fluxo.value;
+    const permanencia = data.metrics_basic.permanencia.value;
+    const velocidade = data.metrics_behavioral.velocidade.value;
+    document.getElementById('ivu-value').innerText = ivu; // Atualização dos Cards
+    document.getElementById('flux-value').innerText = fluxo;
+    document.getElementById('perm-value').innerText = permanencia + "s";
+    const velElement = document.getElementById('vel-value');
+    if (velElement) velElement.innerText = velocidade + " m/s";
+    const jsonElement = document.getElementById('json-output'); // Exibe o JSON completo
+    if (jsonElement) jsonElement.innerText = JSON.stringify(data, null, 2); 
+    renderizarGrafico(fluxo, permanencia, ivu, velocidade); // Atualização do Gráfico
+}
+function renderizarGrafico(f, p, i, v) {
     const ctx = document.getElementById('myChart').getContext('2d');
     if (window.chartInstance) window.chartInstance.destroy();
-
-    window.chartInstance = new Chart(ctx, {
+window.chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Fluxo', 'Permanência (s)', 'IVU', 'Velocidade (m/s)'],
+            labels: ['Fluxo', 'Permanência (s)', 'IVU', 'Velocidade'],
             datasets: [{
                 label: 'Métricas da Vitrine',
                 data: [f, p, i, v],

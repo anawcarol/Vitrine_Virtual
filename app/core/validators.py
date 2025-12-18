@@ -4,19 +4,90 @@ from datetime import datetime, time
 class VideoValidator:
     # Headers de formatos de vídeo comuns (Magic Numbers)
     VIDEO_SIGNATURES = {
-        'mp4': [
-            b'\x00\x00\x00\x18ftypmp4', b'\x00\x00\x00\x1cftypisom',
-            b'\x00\x00\x00\x20ftypmp42', b'\x00\x00\x00\x1cftypM4V',
-        ],
-        'mov': [b'\x00\x00\x00\x14ftypqt', b'moov'],
-        'avi': [b'RIFF'],
-        'wmv': [b'\x30\x26\xB2\x75\x8E\x66\xCF\x11\xA6\xD9\x00\xAA\x00\x62\xCE\x6C'],
-        'flv': [b'FLV\x01'],
-        'mkv': [b'\x1A\x45\xDF\xA3'],
-        'webm': [b'\x1A\x45\xDF\xA3'],
-        '3gp': [b'\x00\x00\x00\x14ftyp3gp', b'\x00\x00\x00\x203gp'],
-    }
-
+    'mp4': [
+        b'\x00\x00\x00\x18ftypmp4',
+        b'\x00\x00\x00\x1cftypmp41',
+        b'\x00\x00\x00\x1cftypmp42',
+        b'\x00\x00\x00\x20ftypmp42',
+        b'\x00\x00\x00\x1cftypisom',
+        b'\x00\x00\x00\x20ftypisom',
+        b'\x00\x00\x00\x1cftypM4V',
+        b'\x00\x00\x00\x20ftypM4V',
+        b'\x00\x00\x00\x1cftypMSNV',  # Sony PSP
+        b'\x00\x00\x00\x1cftypM4A',   # M4A audio (também container MP4)
+        b'\x00\x00\x00\x1cftypM4P',   # iTunes protected
+        b'\x00\x00\x00\x1cftypM4B',   # iTunes audiobook
+        b'\x00\x00\x00\x1cftypF4V',   # Flash MP4
+        b'\x00\x00\x00\x1cftypF4P',   # Flash protected
+        b'\x00\x00\x00\x1cftypF4A',   # Flash audio
+        b'\x00\x00\x00\x1cftypF4B',   # Flash audiobook
+        b'\x00\x00\x00\x1cftypavc1',  # AVC/H.264
+        b'\x00\x00\x00\x1cftypMp41',
+        b'\x00\x00\x00\x1cftypMp42',
+        b'ftyp',  # Genérico - qualquer variante ftyp
+    ],
+    'mov': [
+        b'\x00\x00\x00\x14ftypqt',
+        b'\x00\x00\x00\x20ftypqt',
+        b'moov',
+        b'mdat',
+        b'wide',
+        b'free',
+    ],
+    'avi': [
+        b'RIFF',
+        b'AVI ',
+    ],
+    'wmv': [
+        b'\x30\x26\xB2\x75\x8E\x66\xCF\x11\xA6\xD9\x00\xAA\x00\x62\xCE\x6C',
+        b'\x30\x26\xB2\x75\x8E\x66\xCF\x11',  # Versão curta
+    ],
+    'flv': [
+        b'FLV\x01',
+        b'FLV\x04',
+        b'FLV\x05',
+    ],
+    'mkv': [
+        b'\x1A\x45\xDF\xA3',
+    ],
+    'webm': [
+        b'\x1A\x45\xDF\xA3',
+    ],
+    '3gp': [
+        b'\x00\x00\x00\x14ftyp3gp',
+        b'\x00\x00\x00\x203gp',
+        b'\x00\x00\x00\x1cftyp3gp4',
+        b'\x00\x00\x00\x1cftyp3gp5',
+        b'\x00\x00\x00\x1cftyp3gp6',
+        b'\x00\x00\x00\x1cftyp3gp7',
+        b'\x00\x00\x00\x1cftyp3ge6',
+        b'\x00\x00\x00\x1cftyp3ge7',
+        b'\x00\x00\x00\x1cftyp3gg6',
+    ],
+    'ogv': [
+        b'OggS',
+    ],
+    'ts': [
+        b'\x47',  # MPEG-TS (Transport Stream)
+    ],
+    'mts': [
+        b'\x47',  # AVCHD
+    ],
+    'm2ts': [
+        b'\x47',  # Blu-ray BDAV
+    ],
+    'vob': [
+        b'\x00\x00\x01\xBA',  # MPEG-PS (DVD)
+    ],
+    'mpg': [
+        b'\x00\x00\x01\xBA',  # MPEG-1/2
+        b'\x00\x00\x01\xB3',
+    ],
+    'mpeg': [
+        b'\x00\x00\x01\xBA',
+        b'\x00\x00\x01\xB3',
+    ],
+}
     @staticmethod
     async def validate_file(file: UploadFile) -> str:
         """
