@@ -19,6 +19,7 @@ async def complete_analysis(
     weather_service: WeatherService = Depends(),
     analise_service: AnaliseService = Depends()
 ):
+    # 1. Validações e Preparação
     validated_time = validate_time_format(start_time)
     await VideoValidator.validate_file(file)
 
@@ -29,22 +30,31 @@ async def complete_analysis(
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        # 1. Execução dos Serviços
+        # 2. Execução dos Serviços
+        
+        # A) Visão Computacional
+        print(f"🔄 Processando vídeo...")
         yolo_data = await yolo_service.process_video(temp_path, start_time=validated_time)
+        
+        # B) Clima Histórico
+        print(f"☁️ Buscando clima...")
         weather_raw = await weather_service.get_historical_weather(month, validated_time.hour)
-        
-        # Recupera os dados limpos do clima (ou fallback vazio)
-        climate_data = weather_raw.get("data", {})
-        
-        # Gera Análise
+        # Extrai o dicionário de dados limpos do serviço de clima (se existir) ou usa fallback
+        climate_data = weather_raw.get("data", {
+            "month": month, "hour": validated_time.hour, 
+            "temperature_avg_c": 0, "rain_probability_pct": 0, 
+            "rain_volume_mm": 0, "thermal_comfort": "n/a", "rain_condition": "n/a"
+        })
+
+        # C) Inteligência Urbana (Gera 'analysis' com 'oportunidade_publica')
+        print(f"🧠 Gerando diagnóstico...")
         urban_analysis = analise_service.gerar_diagnostico(yolo_data, weather_raw)
 
-        # 2. Montagem do JSON Final
+        # 3. Montagem da Resposta JSON
         return {
             "video_id": file.filename,
             "status": "success",
             
-            # Métricas Básicas
             "metrics_basic": {
                 "fluxo": {
                     "label": "Fluxo Total",
@@ -58,7 +68,6 @@ async def complete_analysis(
                 }
             },
             
-            # Métricas Comportamentais
             "metrics_behavioral": {
                 "velocidade": {
                     "label": "Ritmo Médio",
@@ -67,34 +76,31 @@ async def complete_analysis(
                 }
             },
             
-            # Índices
             "urban_vitality_index": yolo_data['ivu'],
             "opportunity_window": yolo_data['janela'],
             
-            # Contexto (Fixo para Hackathon ou poderia vir do Form)
             "context": {
                 "local": "Setor Comercial Sul – Bloco C",
                 "camera_type": "CFTV público",
                 "analysis_version": "v1.0-hackathon"
             },
             
-            # Clima Rico
             "climate": {
-                "month": climate_data.get("month", month),
-                "hour": climate_data.get("hour", validated_time.hour),
-                "temperature_avg_c": climate_data.get("temperature_avg_c", 0),
-                "rain_probability_pct": climate_data.get("rain_probability_pct", 0),
-                "rain_volume_mm": climate_data.get("rain_volume_mm", 0),
-                "thermal_comfort": climate_data.get("thermal_comfort", "n/a"),
-                "rain_condition": climate_data.get("rain_condition", "n/a")
+                "month": climate_data.get("month"),
+                "hour": climate_data.get("hour"),
+                "temperature_avg_c": climate_data.get("temperature_avg_c"),
+                "rain_probability_pct": climate_data.get("rain_probability_pct"),
+                "rain_volume_mm": climate_data.get("rain_volume_mm"),
+                "thermal_comfort": climate_data.get("thermal_comfort"),
+                "rain_condition": climate_data.get("rain_condition")
             },
             
-            # Mantemos a analysis no final para não perder a inteligência
+            # O bloco analysis conterá automaticamente 'oportunidade_publica' e 'recomendacoes'
             "analysis": urban_analysis
         }
 
     except Exception as e:
-        print(f"Erro: {e}")
+        print(f"❌ Erro Crítico: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
     finally:
