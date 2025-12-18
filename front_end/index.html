@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Vitrine Virtual</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>Análise de Vitalidade Urbana</h1>
+            <input type="file" id="videoInput" accept="video/*">
+            <button onclick="uploadVideo()">Analisar Vídeo</button>
+        </header>
+
+        <section class="metrics-grid">
+            <div class="card">
+                <h3>IVU (Índice)</h3>
+                <p id="ivu-value">--</p>
+            </div>
+            <div class="card">
+                <h3>Permanência</h3>
+                <p id="perm-value">--</p>
+            </div>
+            <div class="card">
+                <h3>Fluxo Total</h3>
+                <p id="flux-value">--</p>
+            </div>
+            <div class="card">
+                <h3>Velocidade Média</h3>
+                <p id="vel-value">--</p>
+            </div>
+        </section>
+
+        <section class="charts">
+            <canvas id="myChart"></canvas>
+        </section>
+
+        <section class="json-display">
+            <h3>Resposta JSON da API</h3>
+            <pre id="json-output"></pre>
+        </section>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
