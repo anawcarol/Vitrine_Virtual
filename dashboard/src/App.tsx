@@ -12,6 +12,9 @@ import {
 import { motion } from 'framer-motion';
 import type { ReportData } from './types';
 
+// 👇 IMPORTANTE: Importando sua logo (certifique-se que ela está na pasta src com nome logo.png)
+import logoImg from './logo.png';
+
 // 👇 MANTENHA O SEU LINK CORRETO DO NGROK AQUI
 const API_URL = "https://submeningeal-unexpansively-alberta.ngrok-free.dev/api/v1/complete-analysis"; 
 
@@ -58,34 +61,40 @@ function App() {
     }
   };
 
-  // --- TELA DE UPLOAD ---
+  // --- TELA DE UPLOAD (Inicial) ---
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
         {/* Efeitos de Fundo */}
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-secondary/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
         
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
           className="bg-card/50 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-3xl shadow-2xl max-w-lg w-full text-center z-10"
         >
           <div className="mb-6 flex justify-center">
-            <div className="w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25">
-              <Activity size={32} className="text-white" />
+            {/* LOGO GRANDE NA TELA INICIAL */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-purple-500 blur-2xl opacity-20 rounded-full"></div>
+              <img 
+                src={logoImg} 
+                alt="Cidade Viva Logo" 
+                className="w-24 h-24 object-contain relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" 
+              />
             </div>
           </div>
           
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-            Vitrine Virtual
+          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
+            Cidade Viva
           </h1>
-          <p className="text-gray-400 mb-8">Configure os parâmetros da análise</p>
+          <p className="text-gray-400 mb-8">Inteligência Artificial para Espaços Urbanos</p>
           
           <div className="space-y-4 text-left">
             
             {/* Input de Arquivo */}
-            <label className={`block w-full h-32 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-primary bg-primary/10' : 'border-gray-700 hover:border-gray-500 hover:bg-white/5'}`}>
-              <Upload className={`mb-2 ${file ? 'text-primary' : 'text-gray-500'}`} size={24} />
+            <label className={`block w-full h-32 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-purple-500 bg-purple-500/10' : 'border-gray-700 hover:border-gray-500 hover:bg-white/5'}`}>
+              <Upload className={`mb-2 ${file ? 'text-purple-400' : 'text-gray-500'}`} size={24} />
               <span className="text-sm font-medium text-gray-300 text-center px-4">
                 {file ? file.name : "Clique para selecionar o vídeo (MP4)"}
               </span>
@@ -99,7 +108,7 @@ function App() {
                 <select 
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-primary focus:bg-white/10 transition-all appearance-none cursor-pointer"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 focus:bg-white/10 transition-all appearance-none cursor-pointer"
                 >
                   <option value="1" className="bg-card">Janeiro</option>
                   <option value="2" className="bg-card">Fevereiro</option>
@@ -122,7 +131,7 @@ function App() {
                   type="time" 
                   value={selectedTime}
                   onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-primary focus:bg-white/10 transition-all cursor-pointer"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 focus:bg-white/10 transition-all cursor-pointer"
                 />
               </div>
             </div>
@@ -136,7 +145,7 @@ function App() {
             <button 
               onClick={handleAnalyze} 
               disabled={!file || loading}
-              className="w-full py-4 bg-gradient-to-r from-primary to-blue-600 hover:to-blue-500 rounded-xl font-bold text-white shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+              className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:to-blue-500 rounded-xl font-bold text-white shadow-lg shadow-purple-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
             >
               {loading ? (
                 <><span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span> Processando...</>
@@ -185,14 +194,15 @@ function App() {
       <aside className="w-20 lg:w-64 bg-card/50 backdrop-blur-md border-r border-white/5 flex flex-col justify-between hidden md:flex">
         <div>
           <div className="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-white/5">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-              <Activity className="text-white" size={24} />
+            {/* LOGO PEQUENA NA SIDEBAR */}
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img src={logoImg} alt="Logo" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
             </div>
-            <span className="ml-3 font-bold text-lg hidden lg:block tracking-wide">Vitrine.AI</span>
+            <span className="ml-3 font-bold text-lg hidden lg:block tracking-wide text-white">Cidade Viva</span>
           </div>
           
           <nav className="mt-8 space-y-2 px-3">
-            <button className="flex items-center gap-3 w-full p-3 bg-primary/10 text-primary border border-primary/20 rounded-xl transition-all">
+            <button className="flex items-center gap-3 w-full p-3 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-xl transition-all">
               <LayoutDashboard size={22} /> <span className="hidden lg:block font-medium">Dashboard</span>
             </button>
             <button className="flex items-center gap-3 w-full p-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
@@ -210,17 +220,17 @@ function App() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto relative">
-        <div className="h-1 w-full bg-gradient-to-r from-primary via-secondary to-accent fixed top-0 left-0 z-50 opacity-50" />
+        <div className="h-1 w-full bg-gradient-to-r from-purple-500 via-blue-500 to-purple-400 fixed top-0 left-0 z-50 opacity-50" />
 
         <div className="p-4 lg:p-8 max-w-[1600px] mx-auto space-y-8">
           
           {/* HEADER */}
           <header className="flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
-              <div className="flex items-center gap-2 text-primary mb-1">
+              <div className="flex items-center gap-2 text-purple-400 mb-1">
                 <CheckCircle2 size={16} /> <span className="text-xs font-bold uppercase tracking-wider">Análise Concluída</span>
               </div>
-              <h2 className="text-3xl font-bold">{data.context.local}</h2>
+              <h2 className="text-3xl font-bold text-white">{data.context.local}</h2>
               <p className="text-gray-400 text-sm flex items-center gap-2 mt-1">
                 <Clock size={14} /> Ref: {data.climate.hour}h00 • Mês {data.climate.month} • {data.video_id}
               </p>
@@ -239,34 +249,34 @@ function App() {
           {/* KPI CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
-              className="bg-card border border-white/5 p-6 rounded-2xl relative group overflow-hidden hover:border-primary/30 transition-all">
+              className="bg-card border border-white/5 p-6 rounded-2xl relative group overflow-hidden hover:border-purple-500/30 transition-all">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Users size={64} /></div>
                <p className="text-gray-400 text-sm font-medium mb-1">Fluxo Total</p>
                <div className="text-4xl font-bold text-white mb-2">{data.metrics_basic.fluxo.value}</div>
-               <div className="inline-flex items-center text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">{data.metrics_basic.fluxo.unit}</div>
+               <div className="inline-flex items-center text-xs font-medium text-purple-400 bg-purple-500/10 px-2 py-1 rounded">{data.metrics_basic.fluxo.unit}</div>
             </motion.div>
 
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
-              className="bg-card border border-white/5 p-6 rounded-2xl relative group overflow-hidden hover:border-secondary/30 transition-all">
+              className="bg-card border border-white/5 p-6 rounded-2xl relative group overflow-hidden hover:border-blue-500/30 transition-all">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Clock size={64} /></div>
                <p className="text-gray-400 text-sm font-medium mb-1">Permanência Média</p>
                <div className="text-4xl font-bold text-white mb-2">{data.metrics_basic.permanencia.value}</div>
-               <div className="inline-flex items-center text-xs font-medium text-secondary bg-secondary/10 px-2 py-1 rounded">{data.metrics_basic.permanencia.unit}</div>
+               <div className="inline-flex items-center text-xs font-medium text-blue-400 bg-blue-500/10 px-2 py-1 rounded">{data.metrics_basic.permanencia.unit}</div>
             </motion.div>
 
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
-              className="bg-card border border-white/5 p-6 rounded-2xl relative group overflow-hidden hover:border-accent/30 transition-all">
+              className="bg-card border border-white/5 p-6 rounded-2xl relative group overflow-hidden hover:border-orange-500/30 transition-all">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Zap size={64} /></div>
                <p className="text-gray-400 text-sm font-medium mb-1">Ritmo Médio</p>
                <div className="text-4xl font-bold text-white mb-2">{data.metrics_behavioral.velocidade.value}</div>
-               <div className="inline-flex items-center text-xs font-medium text-accent bg-accent/10 px-2 py-1 rounded">{data.metrics_behavioral.velocidade.unit}</div>
+               <div className="inline-flex items-center text-xs font-medium text-orange-400 bg-orange-500/10 px-2 py-1 rounded">{data.metrics_behavioral.velocidade.unit}</div>
             </motion.div>
 
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}
-              className="bg-gradient-to-br from-primary/20 to-secondary/10 border border-primary/20 p-6 rounded-2xl relative">
+              className="bg-gradient-to-br from-purple-500/20 to-blue-500/10 border border-purple-500/20 p-6 rounded-2xl relative">
                <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                  <span className="text-xs font-bold text-primary uppercase tracking-widest">Janela de Oportunidade</span>
+                  <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">Janela de Oportunidade</span>
                </div>
                <div className="text-xl font-bold text-white leading-tight mb-2">{data.opportunity_window.status}</div>
                <p className="text-sm text-gray-300">Horário Sugerido: {data.opportunity_window.horario}</p>
@@ -277,7 +287,7 @@ function App() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.5 }}
               className="bg-card border border-white/5 p-6 rounded-2xl lg:col-span-1 flex flex-col items-center justify-center">
-              <h3 className="text-lg font-bold mb-6 flex items-center gap-2 w-full"><Activity size={18} className="text-secondary" /> Perfil Urbano</h3>
+              <h3 className="text-lg font-bold mb-6 flex items-center gap-2 w-full"><Activity size={18} className="text-blue-400" /> Perfil Urbano</h3>
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
@@ -310,7 +320,7 @@ function App() {
                     <h3 className="text-xl font-bold text-white mb-2">Diagnóstico de Vitalidade</h3>
                     <p className="text-gray-400 text-sm leading-relaxed">
                       O índice de <strong>{data.urban_vitality_index}</strong> indica um perfil 
-                      <span className="text-accent"> {data.analysis.perfil.replace('_', ' ').toUpperCase()}</span>. 
+                      <span className="text-purple-400"> {data.analysis.perfil.replace('_', ' ').toUpperCase()}</span>. 
                       Os dados foram calculados considerando as condições climáticas de {data.climate.month === 12 ? "Dezembro" : "Abril"}.
                     </p>
                   </div>
@@ -359,12 +369,12 @@ function App() {
           {/* RECOMENDAÇÕES */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }} className="space-y-4">
-              <h3 className="text-xl font-bold flex items-center gap-2"><Hammer className="text-primary" /> Oportunidades Públicas</h3>
+              <h3 className="text-xl font-bold flex items-center gap-2"><Hammer className="text-purple-400" /> Oportunidades Públicas</h3>
               <p className="text-sm text-gray-400 mb-4">{data.analysis.oportunidade_publica.objetivo_urbano}</p>
               <div className="grid gap-4">
                 {data.analysis.oportunidade_publica.intervencoes_leves.map((item, idx) => (
-                  <div key={idx} className="bg-card border border-primary/20 p-4 rounded-xl flex items-start gap-4 hover:bg-primary/5 transition-colors">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary mt-1"><Lightbulb size={20} /></div>
+                  <div key={idx} className="bg-card border border-purple-500/20 p-4 rounded-xl flex items-start gap-4 hover:bg-purple-500/5 transition-colors">
+                    <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400 mt-1"><Lightbulb size={20} /></div>
                     <div><h4 className="font-bold text-white">{item.acao}</h4><p className="text-sm text-gray-400 mt-1">{item.objetivo}</p></div>
                   </div>
                 ))}
@@ -372,10 +382,10 @@ function App() {
             </motion.div>
 
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.9 }} className="space-y-4">
-               <h3 className="text-xl font-bold flex items-center gap-2"><TrendingUp className="text-accent" /> Recomendações de Uso</h3>
+               <h3 className="text-xl font-bold flex items-center gap-2"><TrendingUp className="text-orange-400" /> Recomendações de Uso</h3>
                <div className="grid gap-4">
                  {data.analysis.recomendacoes.map((rec, idx) => (
-                   <div key={idx} className="bg-card border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:border-accent/30 transition-all">
+                   <div key={idx} className="bg-card border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:border-orange-500/30 transition-all">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${rec.tipo === 'cultura' ? 'bg-purple-500/20 text-purple-300' : rec.tipo === 'comercio' ? 'bg-green-500/20 text-green-300' : 'bg-orange-500/20 text-orange-300'}`}>{rec.tipo}</span>
